@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "139160572981",
+    "project_id": "sab-connect-b4ba2",
+    "storage_bucket": "sab-connect-b4ba2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:139160572981:android:12c8c4c7d87ce813434d7c",
+        "android_client_info": {
+          "package_name": "com.sabconnect.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "139160572981-acao9h60eg0ltj12sbm8f1t75maumggk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sabconnect.app",
+            "certificate_hash": "7fba96648528e85fac4114779ae060135cd2ff8e"
+          }
+        },
+        {
+          "client_id": "139160572981-cpkldmntflentfoq78iog8ja6hfdm9a6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sabconnect.app",
+            "certificate_hash": "baa0da737ab6954883510f028560d7c4ad401c66"
+          }
+        },
+        {
+          "client_id": "139160572981-qsgliauhap42hgallg7n8h8nt7l113ma.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDAn9_Cmu23_gNk63whyDStQ88iH_LgWPk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "139160572981-qsgliauhap42hgallg7n8h8nt7l113ma.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

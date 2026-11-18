@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">SAB Connect</string>
+    <string name="tagline_retail_suite">Business. Technology. Connection.</string>
+    <string name="action_sign_in_google">Continue with Google</string>
+    <string name="action_sign_out">Sign out</string>
+    <string name="nav_dashboard">Home</string>
+    <string name="nav_inventory">Stock</string>
+    <string name="nav_billing">Billing</string>
+    <string name="nav_team">Team</string>
+    <string name="nav_reports_crm">Reports</string>
+    <string name="status_synced">Online • Live</string>
+    <string name="status_pending_sync">Syncing...</string>
+    <string name="status_offline_cache">Connecting...</string>
+    <string name="error_generic_load">Unable to reach cloud server. Please check internet and retry.</string>
+</resources>

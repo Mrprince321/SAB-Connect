@@ -1,0 +1,6 @@
+{
+  "name": "SAB Connect",
+  "description": "SAB Connect by SAB Digital Technologies: online 3-role workspace for Customers, Employees, and Admins with digital services, portfolio, project enquiries, quotations, consultations, lead CRM, and project tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

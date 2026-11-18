@@ -1,0 +1,248 @@
+{
+  "entities": {
+    "StoreProfile": {
+      "title": "StoreProfile",
+      "description": "Company workspace configuration and settings.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Authenticated owner UID" },
+        "storeName": { "type": "string", "description": "Business display name" },
+        "ownerName": { "type": "string", "description": "Owner or manager full name" },
+        "email": { "type": "string", "description": "Business contact email" },
+        "phone": { "type": "string", "description": "Business contact phone" },
+        "address": { "type": "string", "description": "Business street address" },
+        "currencySymbol": { "type": "string", "description": "Currency symbol such as ₹, $, €" },
+        "taxRatePercent": { "type": "number", "description": "Default tax percentage" },
+        "invoiceCounter": { "type": "integer", "description": "Sequential counter starting at 1001" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp on creation" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp on update" }
+      },
+      "required": ["userId", "storeName", "ownerName", "currencySymbol", "taxRatePercent", "invoiceCounter", "createdAt", "updatedAt"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Retail catalog product and inventory stock level.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner UID" },
+        "name": { "type": "string", "description": "Product name" },
+        "sku": { "type": "string", "description": "Stock keeping unit" },
+        "category": { "type": "string", "description": "Product category" },
+        "unit": { "type": "string", "description": "Measurement unit" },
+        "sellingPrice": { "type": "number", "description": "Unit selling price" },
+        "costPrice": { "type": "number", "description": "Unit cost price" },
+        "stockQuantity": { "type": "integer", "description": "Available stock count" },
+        "lowStockThreshold": { "type": "integer", "description": "Alert threshold" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name", "sku", "category", "unit", "sellingPrice", "costPrice", "stockQuantity", "lowStockThreshold", "createdAt", "updatedAt"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Customer account record and metrics.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner UID" },
+        "fullName": { "type": "string", "description": "Customer full name" },
+        "phone": { "type": "string", "description": "Customer phone number" },
+        "email": { "type": "string", "description": "Customer email" },
+        "address": { "type": "string", "description": "Customer address or company" },
+        "notes": { "type": "string", "description": "Account notes" },
+        "totalOrders": { "type": "integer", "description": "Number of orders or projects" },
+        "totalSpent": { "type": "number", "description": "Cumulative billing amount" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "fullName", "phone", "email", "address", "notes", "totalOrders", "totalSpent", "createdAt", "updatedAt"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Billing invoice record.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "discountPercent": { "type": "number" },
+        "discountAmount": { "type": "number" },
+        "taxPercent": { "type": "number" },
+        "taxAmount": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "estimatedProfit": { "type": "number" },
+        "paymentMethod": { "type": "string", "enum": ["CASH", "CARD", "DIGITAL"] },
+        "paymentStatus": { "type": "string", "enum": ["PAID", "PENDING"] },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "invoiceNumber", "customerId", "customerName", "customerPhone", "items", "subtotal", "discountPercent", "discountAmount", "taxPercent", "taxAmount", "totalAmount", "estimatedProfit", "paymentMethod", "paymentStatus", "notes", "createdAt", "updatedAt"]
+    },
+    "Employee": {
+      "title": "Employee",
+      "description": "Employee profile and real-time shift/availability status.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "fullName": { "type": "string" },
+        "role": { "type": "string" },
+        "phone": { "type": "string" },
+        "shiftStatus": { "type": "string", "enum": ["CLOCKED_IN", "ON_BREAK", "CLOCKED_OUT"] },
+        "lastClockActionAt": { "type": "string", "format": "date-time" },
+        "activeRecord": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "fullName", "role", "phone", "shiftStatus", "activeRecord", "createdAt", "updatedAt"]
+    },
+    "ClockLog": {
+      "title": "ClockLog",
+      "description": "Immutable real-time employee clock log entry.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "employeeName": { "type": "string" },
+        "employeeRole": { "type": "string" },
+        "action": { "type": "string", "enum": ["CLOCK_IN", "BREAK_START", "BREAK_END", "CLOCK_OUT"] },
+        "note": { "type": "string" },
+        "loggedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "employeeId", "employeeName", "employeeRole", "action", "note", "loggedAt"]
+    },
+    "CompanyService": {
+      "title": "CompanyService",
+      "description": "Digital service offering managed by Admin and browsed by Customers.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Workspace owner UID" },
+        "title": { "type": "string", "description": "Service title" },
+        "category": { "type": "string", "description": "Service domain category" },
+        "description": { "type": "string", "description": "Detailed service summary" },
+        "deliverables": { "type": "string", "description": "Tech stack and key deliverables" },
+        "startingPrice": { "type": "number", "description": "Base package price" },
+        "timeline": { "type": "string", "description": "Typical turnaround duration" },
+        "activeService": { "type": "boolean", "description": "Whether service is visible to customers" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "category", "description", "deliverables", "startingPrice", "timeline", "activeService", "createdAt", "updatedAt"]
+    },
+    "PortfolioItem": {
+      "title": "PortfolioItem",
+      "description": "Showcase project portfolio item managed by Admin and explored by Customers.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "clientName": { "type": "string" },
+        "category": { "type": "string" },
+        "summary": { "type": "string" },
+        "techStack": { "type": "string" },
+        "impactMetric": { "type": "string" },
+        "featured": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "clientName", "category", "summary", "techStack", "impactMetric", "featured", "createdAt", "updatedAt"]
+    },
+    "EnquiryLead": {
+      "title": "EnquiryLead",
+      "description": "Customer project enquiry, quotation request, or consultation booking tracked through CRM stages.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "enquiryCode": { "type": "string", "description": "Formatted code e.g. ENQ-1042" },
+        "enquiryType": { "type": "string", "enum": ["ENQUIRY", "QUOTATION", "CONSULTATION"] },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "customerEmail": { "type": "string" },
+        "serviceTitle": { "type": "string" },
+        "projectTitle": { "type": "string" },
+        "requirements": { "type": "string" },
+        "budgetRange": { "type": "string" },
+        "preferredDate": { "type": "string" },
+        "status": { "type": "string", "enum": ["NEW", "IN_PROGRESS", "QUOTED", "CONVERTED", "CLOSED"] },
+        "assignedEmployeeId": { "type": "string" },
+        "assignedEmployeeName": { "type": "string" },
+        "quotedAmount": { "type": "number" },
+        "followUpDate": { "type": "string" },
+        "followUpNote": { "type": "string" },
+        "latestNote": { "type": "string" },
+        "updates": { "type": "array", "description": "Bounded communication & call note log (max 30 entries)" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "enquiryCode", "enquiryType", "customerId", "customerName", "customerPhone", "customerEmail", "serviceTitle", "projectTitle", "requirements", "budgetRange", "preferredDate", "status", "assignedEmployeeId", "assignedEmployeeName", "quotedAmount", "followUpDate", "followUpNote", "latestNote", "updates", "createdAt", "updatedAt"]
+    },
+    "ClientProject": {
+      "title": "ClientProject",
+      "description": "Active client delivery project tracked by Admin, Employee, and Customer.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "enquiryId": { "type": "string" },
+        "title": { "type": "string" },
+        "clientName": { "type": "string" },
+        "serviceTitle": { "type": "string" },
+        "assignedEmployeeId": { "type": "string" },
+        "assignedEmployeeName": { "type": "string" },
+        "status": { "type": "string", "enum": ["PLANNING", "IN_PROGRESS", "REVIEW", "COMPLETED"] },
+        "progressPercent": { "type": "integer" },
+        "milestoneNote": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "projectValue": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "enquiryId", "title", "clientName", "serviceTitle", "assignedEmployeeId", "assignedEmployeeName", "status", "progressPercent", "milestoneNote", "dueDate", "projectValue", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/StoreProfile" },
+      "description": "Workspace profile and configuration."
+    },
+    "/users/{userId}/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Retail products and stock levels."
+    },
+    "/users/{userId}/customers/{customerId}": {
+      "schema": { "$ref": "#/entities/Customer" },
+      "description": "Customer directory."
+    },
+    "/users/{userId}/invoices/{invoiceId}": {
+      "schema": { "$ref": "#/entities/Invoice" },
+      "description": "Billing invoices."
+    },
+    "/users/{userId}/employees/{employeeId}": {
+      "schema": { "$ref": "#/entities/Employee" },
+      "description": "Employees and real-time status."
+    },
+    "/users/{userId}/clock_logs/{logId}": {
+      "schema": { "$ref": "#/entities/ClockLog" },
+      "description": "Real-time employee shift clock logs."
+    },
+    "/users/{userId}/services/{serviceId}": {
+      "schema": { "$ref": "#/entities/CompanyService" },
+      "description": "Company service offerings."
+    },
+    "/users/{userId}/portfolio_projects/{projectId}": {
+      "schema": { "$ref": "#/entities/PortfolioItem" },
+      "description": "Completed company portfolio projects."
+    },
+    "/users/{userId}/enquiries/{enquiryId}": {
+      "schema": { "$ref": "#/entities/EnquiryLead" },
+      "description": "Customer project enquiries, quotations, and booked consultations."
+    },
+    "/users/{userId}/client_projects/{projectId}": {
+      "schema": { "$ref": "#/entities/ClientProject" },
+      "description": "Assigned client delivery projects and milestone progress."
+    }
+  }
+}

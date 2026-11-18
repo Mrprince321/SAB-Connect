@@ -1,0 +1,408 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net: deny everything by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    function isValidStoreProfile(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.storeName is string && data.storeName.size() >= 1 && data.storeName.size() <= 80 &&
+             data.ownerName is string && data.ownerName.size() >= 1 && data.ownerName.size() <= 80 &&
+             data.email is string && data.email.size() <= 120 &&
+             data.phone is string && data.phone.size() <= 30 &&
+             data.address is string && data.address.size() <= 160 &&
+             data.currencySymbol is string && data.currencySymbol.size() >= 1 && data.currencySymbol.size() <= 5 &&
+             data.taxRatePercent is number && data.taxRatePercent >= 0 && data.taxRatePercent <= 50 &&
+             data.invoiceCounter is int && data.invoiceCounter >= 1000 && data.invoiceCounter <= 99999999;
+    }
+
+    function isValidProduct(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+             data.sku is string && data.sku.size() >= 1 && data.sku.size() <= 40 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 50 &&
+             data.unit is string && data.unit.size() >= 1 && data.unit.size() <= 20 &&
+             data.sellingPrice is number && data.sellingPrice >= 0 && data.sellingPrice <= 10000000 &&
+             data.costPrice is number && data.costPrice >= 0 && data.costPrice <= 10000000 &&
+             data.stockQuantity is int && data.stockQuantity >= 0 && data.stockQuantity <= 10000000 &&
+             data.lowStockThreshold is int && data.lowStockThreshold >= 0 && data.lowStockThreshold <= 100000;
+    }
+
+    function isValidCustomer(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 80 &&
+             data.phone is string && data.phone.size() <= 30 &&
+             data.email is string && data.email.size() <= 120 &&
+             data.address is string && data.address.size() <= 180 &&
+             data.notes is string && data.notes.size() <= 250 &&
+             data.totalOrders is int && data.totalOrders >= 0 && data.totalOrders <= 1000000 &&
+             data.totalSpent is number && data.totalSpent >= 0 && data.totalSpent <= 1000000000;
+    }
+
+    function isValidInvoice(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.invoiceNumber is string && data.invoiceNumber.size() >= 1 && data.invoiceNumber.size() <= 30 &&
+             data.customerId is string && data.customerId.size() <= 128 &&
+             data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 80 &&
+             data.customerPhone is string && data.customerPhone.size() <= 30 &&
+             data.items is list && data.items.size() >= 1 && data.items.size() <= 50 &&
+             data.items[0] is map &&
+             data.subtotal is number && data.subtotal >= 0 && data.subtotal <= 1000000000 &&
+             data.discountPercent is number && data.discountPercent >= 0 && data.discountPercent <= 100 &&
+             data.discountAmount is number && data.discountAmount >= 0 && data.discountAmount <= 1000000000 &&
+             data.taxPercent is number && data.taxPercent >= 0 && data.taxPercent <= 50 &&
+             data.taxAmount is number && data.taxAmount >= 0 && data.taxAmount <= 1000000000 &&
+             data.totalAmount is number && data.totalAmount >= 0 && data.totalAmount <= 1000000000 &&
+             data.estimatedProfit is number && data.estimatedProfit >= -1000000000 && data.estimatedProfit <= 1000000000 &&
+             data.paymentMethod in ['CASH', 'CARD', 'DIGITAL'] &&
+             data.paymentStatus in ['PAID', 'PENDING'] &&
+             data.notes is string && data.notes.size() <= 200;
+    }
+
+    function isValidEmployee(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 80 &&
+             data.role is string && data.role.size() >= 1 && data.role.size() <= 40 &&
+             data.phone is string && data.phone.size() <= 30 &&
+             data.shiftStatus in ['CLOCKED_IN', 'ON_BREAK', 'CLOCKED_OUT'] &&
+             (!('lastClockActionAt' in data) || isValidTimestamp(data.lastClockActionAt)) &&
+             data.activeRecord is bool;
+    }
+
+    function isValidClockLog(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.employeeId is string && isValidId(data.employeeId) &&
+             data.employeeName is string && data.employeeName.size() >= 1 && data.employeeName.size() <= 80 &&
+             data.employeeRole is string && data.employeeRole.size() >= 1 && data.employeeRole.size() <= 40 &&
+             data.action in ['CLOCK_IN', 'BREAK_START', 'BREAK_END', 'CLOCK_OUT'] &&
+             data.note is string && data.note.size() <= 160;
+    }
+
+    function isValidCompanyService(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 80 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 50 &&
+             data.description is string && data.description.size() >= 1 && data.description.size() <= 400 &&
+             data.deliverables is string && data.deliverables.size() <= 200 &&
+             data.startingPrice is number && data.startingPrice >= 0 && data.startingPrice <= 100000000 &&
+             data.timeline is string && data.timeline.size() <= 60 &&
+             data.activeService is bool;
+    }
+
+    function isValidPortfolioItem(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 100 &&
+             data.clientName is string && data.clientName.size() >= 1 && data.clientName.size() <= 80 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 50 &&
+             data.summary is string && data.summary.size() >= 1 && data.summary.size() <= 400 &&
+             data.techStack is string && data.techStack.size() <= 160 &&
+             data.impactMetric is string && data.impactMetric.size() <= 80 &&
+             data.featured is bool;
+    }
+
+    function isValidEnquiryLead(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.enquiryCode is string && data.enquiryCode.size() >= 1 && data.enquiryCode.size() <= 30 &&
+             data.enquiryType in ['ENQUIRY', 'QUOTATION', 'CONSULTATION'] &&
+             data.customerId is string && data.customerId.size() <= 128 &&
+             data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 80 &&
+             data.customerPhone is string && data.customerPhone.size() <= 30 &&
+             data.customerEmail is string && data.customerEmail.size() <= 120 &&
+             data.serviceTitle is string && data.serviceTitle.size() >= 1 && data.serviceTitle.size() <= 80 &&
+             data.projectTitle is string && data.projectTitle.size() >= 1 && data.projectTitle.size() <= 120 &&
+             data.requirements is string && data.requirements.size() >= 1 && data.requirements.size() <= 600 &&
+             data.budgetRange is string && data.budgetRange.size() <= 60 &&
+             data.preferredDate is string && data.preferredDate.size() <= 60 &&
+             data.status in ['NEW', 'IN_PROGRESS', 'QUOTED', 'CONVERTED', 'CLOSED'] &&
+             data.assignedEmployeeId is string && data.assignedEmployeeId.size() <= 128 &&
+             data.assignedEmployeeName is string && data.assignedEmployeeName.size() <= 80 &&
+             data.quotedAmount is number && data.quotedAmount >= 0 && data.quotedAmount <= 1000000000 &&
+             data.followUpDate is string && data.followUpDate.size() <= 60 &&
+             data.followUpNote is string && data.followUpNote.size() <= 250 &&
+             data.latestNote is string && data.latestNote.size() <= 300 &&
+             data.updates is list && data.updates.size() <= 30 &&
+             (data.updates.size() == 0 || data.updates[0] is map);
+    }
+
+    function isValidClientProject(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.enquiryId is string && data.enquiryId.size() <= 128 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.clientName is string && data.clientName.size() >= 1 && data.clientName.size() <= 80 &&
+             data.serviceTitle is string && data.serviceTitle.size() >= 1 && data.serviceTitle.size() <= 80 &&
+             data.assignedEmployeeId is string && data.assignedEmployeeId.size() <= 128 &&
+             data.assignedEmployeeName is string && data.assignedEmployeeName.size() <= 80 &&
+             data.status in ['PLANNING', 'IN_PROGRESS', 'REVIEW', 'COMPLETED'] &&
+             data.progressPercent is int && data.progressPercent >= 0 && data.progressPercent <= 100 &&
+             data.milestoneNote is string && data.milestoneNote.size() <= 300 &&
+             data.dueDate is string && data.dueDate.size() <= 60 &&
+             data.projectValue is number && data.projectValue >= 0 && data.projectValue <= 1000000000;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().keys().hasAll(['userId', 'storeName', 'ownerName', 'email', 'phone', 'address', 'currencySymbol', 'taxRatePercent', 'invoiceCounter', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'storeName', 'ownerName', 'email', 'phone', 'address', 'currencySymbol', 'taxRatePercent', 'invoiceCounter', 'createdAt', 'updatedAt']) &&
+                       isValidTimestamp(incoming().createdAt) &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       isValidStoreProfile(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidStoreProfile(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       (
+                         incoming().diff(existing()).affectedKeys().hasOnly(['storeName', 'ownerName', 'email', 'phone', 'address', 'currencySymbol', 'taxRatePercent', 'updatedAt']) ||
+                         incoming().diff(existing()).affectedKeys().hasOnly(['invoiceCounter', 'updatedAt'])
+                       );
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /products/{productId} {
+        allow get: if isOwner(userId) && isValidId(productId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(productId) &&
+                         incoming().keys().hasAll(['userId', 'name', 'sku', 'category', 'unit', 'sellingPrice', 'costPrice', 'stockQuantity', 'lowStockThreshold', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'name', 'sku', 'category', 'unit', 'sellingPrice', 'costPrice', 'stockQuantity', 'lowStockThreshold', 'createdAt', 'updatedAt']) &&
+                         isValidTimestamp(incoming().createdAt) &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         isValidProduct(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(productId) &&
+                         isValidProduct(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         (
+                           incoming().diff(existing()).affectedKeys().hasOnly(['name', 'sku', 'category', 'unit', 'sellingPrice', 'costPrice', 'stockQuantity', 'lowStockThreshold', 'updatedAt']) ||
+                           incoming().diff(existing()).affectedKeys().hasOnly(['stockQuantity', 'updatedAt'])
+                         );
+
+        allow delete: if isOwner(userId) && isValidId(productId);
+      }
+
+      match /customers/{customerId} {
+        allow get: if isOwner(userId) && isValidId(customerId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(customerId) &&
+                         incoming().keys().hasAll(['userId', 'fullName', 'phone', 'email', 'address', 'notes', 'totalOrders', 'totalSpent', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'fullName', 'phone', 'email', 'address', 'notes', 'totalOrders', 'totalSpent', 'createdAt', 'updatedAt']) &&
+                         isValidTimestamp(incoming().createdAt) &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         isValidCustomer(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(customerId) &&
+                         isValidCustomer(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         (
+                           incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'phone', 'email', 'address', 'notes', 'updatedAt']) ||
+                           incoming().diff(existing()).affectedKeys().hasOnly(['totalOrders', 'totalSpent', 'updatedAt'])
+                         );
+
+        allow delete: if isOwner(userId) && isValidId(customerId);
+      }
+
+      match /invoices/{invoiceId} {
+        allow get: if isOwner(userId) && isValidId(invoiceId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(invoiceId) &&
+                         incoming().keys().hasAll(['userId', 'invoiceNumber', 'customerId', 'customerName', 'customerPhone', 'items', 'subtotal', 'discountPercent', 'discountAmount', 'taxPercent', 'taxAmount', 'totalAmount', 'estimatedProfit', 'paymentMethod', 'paymentStatus', 'notes', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'invoiceNumber', 'customerId', 'customerName', 'customerPhone', 'items', 'subtotal', 'discountPercent', 'discountAmount', 'taxPercent', 'taxAmount', 'totalAmount', 'estimatedProfit', 'paymentMethod', 'paymentStatus', 'notes', 'createdAt', 'updatedAt']) &&
+                         isValidTimestamp(incoming().createdAt) &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         isValidInvoice(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(invoiceId) &&
+                         isValidInvoice(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         existing().paymentStatus == 'PENDING' &&
+                         incoming().paymentStatus == 'PAID' &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['paymentStatus', 'updatedAt']);
+
+        allow delete: if false;
+      }
+
+      match /employees/{employeeId} {
+        allow get: if isOwner(userId) && isValidId(employeeId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(employeeId) &&
+                         incoming().keys().hasAll(['userId', 'fullName', 'role', 'phone', 'shiftStatus', 'activeRecord', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'fullName', 'role', 'phone', 'shiftStatus', 'lastClockActionAt', 'activeRecord', 'createdAt', 'updatedAt']) &&
+                         isValidTimestamp(incoming().createdAt) &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         isValidEmployee(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(employeeId) &&
+                         isValidEmployee(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         (
+                           incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'role', 'phone', 'activeRecord', 'updatedAt']) ||
+                           incoming().diff(existing()).affectedKeys().hasOnly(['shiftStatus', 'lastClockActionAt', 'updatedAt'])
+                         );
+
+        allow delete: if isOwner(userId) && isValidId(employeeId);
+      }
+
+      match /clock_logs/{logId} {
+        allow get: if isOwner(userId) && isValidId(logId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(logId) &&
+                         incoming().keys().hasAll(['userId', 'employeeId', 'employeeName', 'employeeRole', 'action', 'note', 'loggedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'employeeId', 'employeeName', 'employeeRole', 'action', 'note', 'loggedAt']) &&
+                         isValidTimestamp(incoming().loggedAt) &&
+                         isValidClockLog(incoming(), userId);
+
+        allow update, delete: if false;
+      }
+
+      match /services/{serviceId} {
+        allow get: if isOwner(userId) && isValidId(serviceId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(serviceId) &&
+                         incoming().keys().hasAll(['userId', 'title', 'category', 'description', 'deliverables', 'startingPrice', 'timeline', 'activeService', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'title', 'category', 'description', 'deliverables', 'startingPrice', 'timeline', 'activeService', 'createdAt', 'updatedAt']) &&
+                         isValidTimestamp(incoming().createdAt) &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         isValidCompanyService(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(serviceId) &&
+                         isValidCompanyService(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'category', 'description', 'deliverables', 'startingPrice', 'timeline', 'activeService', 'updatedAt']);
+
+        allow delete: if isOwner(userId) && isValidId(serviceId);
+      }
+
+      match /portfolio_projects/{projectId} {
+        allow get: if isOwner(userId) && isValidId(projectId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(projectId) &&
+                         incoming().keys().hasAll(['userId', 'title', 'clientName', 'category', 'summary', 'techStack', 'impactMetric', 'featured', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'title', 'clientName', 'category', 'summary', 'techStack', 'impactMetric', 'featured', 'createdAt', 'updatedAt']) &&
+                         isValidTimestamp(incoming().createdAt) &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         isValidPortfolioItem(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(projectId) &&
+                         isValidPortfolioItem(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'clientName', 'category', 'summary', 'techStack', 'impactMetric', 'featured', 'updatedAt']);
+
+        allow delete: if isOwner(userId) && isValidId(projectId);
+      }
+
+      match /enquiries/{enquiryId} {
+        allow get: if isOwner(userId) && isValidId(enquiryId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(enquiryId) &&
+                         incoming().keys().hasAll(['userId', 'enquiryCode', 'enquiryType', 'customerId', 'customerName', 'customerPhone', 'customerEmail', 'serviceTitle', 'projectTitle', 'requirements', 'budgetRange', 'preferredDate', 'status', 'assignedEmployeeId', 'assignedEmployeeName', 'quotedAmount', 'followUpDate', 'followUpNote', 'latestNote', 'updates', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'enquiryCode', 'enquiryType', 'customerId', 'customerName', 'customerPhone', 'customerEmail', 'serviceTitle', 'projectTitle', 'requirements', 'budgetRange', 'preferredDate', 'status', 'assignedEmployeeId', 'assignedEmployeeName', 'quotedAmount', 'followUpDate', 'followUpNote', 'latestNote', 'updates', 'createdAt', 'updatedAt']) &&
+                         isValidTimestamp(incoming().createdAt) &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         isValidEnquiryLead(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(enquiryId) &&
+                         isValidEnquiryLead(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().enquiryCode == existing().enquiryCode &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         (
+                           incoming().diff(existing()).affectedKeys().hasOnly(['assignedEmployeeId', 'assignedEmployeeName', 'status', 'updates', 'latestNote', 'updatedAt']) ||
+                           incoming().diff(existing()).affectedKeys().hasOnly(['status', 'quotedAmount', 'followUpDate', 'followUpNote', 'latestNote', 'updates', 'updatedAt']) ||
+                           incoming().diff(existing()).affectedKeys().hasOnly(['updates', 'latestNote', 'updatedAt'])
+                         );
+
+        allow delete: if isOwner(userId) && isValidId(enquiryId);
+      }
+
+      match /client_projects/{projectId} {
+        allow get: if isOwner(userId) && isValidId(projectId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(projectId) &&
+                         incoming().keys().hasAll(['userId', 'enquiryId', 'title', 'clientName', 'serviceTitle', 'assignedEmployeeId', 'assignedEmployeeName', 'status', 'progressPercent', 'milestoneNote', 'dueDate', 'projectValue', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'enquiryId', 'title', 'clientName', 'serviceTitle', 'assignedEmployeeId', 'assignedEmployeeName', 'status', 'progressPercent', 'milestoneNote', 'dueDate', 'projectValue', 'createdAt', 'updatedAt']) &&
+                         isValidTimestamp(incoming().createdAt) &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         isValidClientProject(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(projectId) &&
+                         isValidClientProject(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'clientName', 'serviceTitle', 'assignedEmployeeId', 'assignedEmployeeName', 'status', 'progressPercent', 'milestoneNote', 'dueDate', 'projectValue', 'updatedAt']);
+
+        allow delete: if isOwner(userId) && isValidId(projectId);
+      }
+    }
+  }
+}
